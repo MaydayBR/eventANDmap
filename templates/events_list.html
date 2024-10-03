@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Events List{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- Include Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>Events List</h1>
+    <div id="map" style="height:500px;width:100%;"></div>
+
+    <script>
+        function initMap() {
+            var detroit = {lat: 42.3314, lng: -83.0458};
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: detroit
+            });
+
+            var events = {{ events|tojson }};
+            events.forEach(function(event) {
+                var marker = new google.maps.Marker({
+                    position: {
+                        lat: parseFloat(event.latitude),
+                        lng: parseFloat(event.longitude)
+                    },
+                    map: map,
+                    title: event.name
+                });
+
+                var infowindow = new google.maps.InfoWindow({
+                    content: `<strong>${event.name}</strong><br>
+                              ${event.description}<br>
+                              Date: ${event.date}<br>
+                              Time: ${event.start_time} - ${event.end_time}`
+                });
+
+                marker.addListener('click', function() {
+                    infowindow.open(map, marker);
+                });
+            });
+        }
+
+        // Initialize the map when the window loads
+        google.maps.event.addDomListener(window, 'load', initMap);
+    </script>
+
+    <!-- Back to Home Button -->
+    <p>
+        <a href="{{ url_for('home') }}">Back to Home</a>
+    </p>
+{% endblock %}

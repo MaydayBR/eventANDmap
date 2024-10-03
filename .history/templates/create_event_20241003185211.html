@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Create Event{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- Include Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>Create Event</h1>
+
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.event_name.label }}<br>
+            {{ form.event_name(size=40) }}
+        </p>
+        <p>
+            {{ form.event_description.label }}<br>
+            {{ form.event_description(cols=40, rows=5) }}
+        </p>
+        <p>
+            {{ form.event_date.label }}<br>
+            {{ form.event_date() }}
+        </p>
+        <p>
+            {{ form.event_start_time.label }}<br>
+            {{ form.event_start_time() }}
+        </p>
+        <p>
+            {{ form.event_end_time.label }}<br>
+            {{ form.event_end_time() }}
+        </p>
+        <!-- Map Container -->
+        <p>
+            <label for="map">Select Event Location:</label><br>
+            <div id="map" style="height: 400px; width: 100%;"></div>
+        </p>
+
+        <!-- Hidden Fields for Latitude and Longitude -->
+        {{ form.latitude() }}
+        {{ form.longitude() }}
+
+        <p>
+            <input type="submit" value="Create Event">
+        </p>
+    </form>
+
+    <!-- Button to Events List -->
+    <p>
+        <a href="{{ url_for('list_events') }}">
+            <button type="button">View Events List</button>
+        </a>
+    </p>
+
+    <!-- Initialize the Map -->
+    <script>
+        function initMap() {
+            var detroit = {lat: parseFloat("{{ form.latitude.data }}"), lng: parseFloat("{{ form.longitude.data }}")};
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: detroit
+            });
+
+            var marker;
+
+            // If latitude and longitude are already set (e.g., after form validation fails)
+            var latField = document.getElementById('latitude');
+            var lngField = document.getElementById('longitude');
+            if (latField.value && lngField.value) {
+                var position = {lat: parseFloat(latField.value), lng: parseFloat(lngField.value)};
+                marker = new google.maps.Marker({
+                    position: position,
+                    map: map
+                });
+                map.setCenter(position);
+            }
+
+            // Add click event listener
+            map.addListener('click', function(event) {
+                // Place or move the marker
+                if (marker) {
+                    marker.setPosition(event.latLng);
+                } else {
+                    marker = new google.maps.Marker({
+                        position: event.latLng,
+                        map: map
+                    });
+                }
+
+                // Update hidden input fields
+                latField.value = event.latLng.lat();
+                lngField.value = event.latLng.lng();
+            });
+        }
+
+        // Initialize the map when the window loads
+        google.maps.event.addDomListener(window, 'load', initMap);
+    </script>
+{% endblock %}
